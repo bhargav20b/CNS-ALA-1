@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RSA Cipher Tool</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.23/jsrsasign-all-min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: radial-gradient(ellipse at center, #0f2027, #203a43, #2c5364);
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .glass {
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    }
+
+    .glow-text {
+      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+      animation: pulseGlow 2s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      from {
+        text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+      }
+      to {
+        text-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+      }
+    }
+
+    .copy-btn:active {
+      transform: scale(0.97);
+    }
+
+    .circle-container {
+      position: absolute;
+      transform: translateY(-10vh);
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+    }
+
+    .circle {
+      border-radius: 50%;
+      background-image: radial-gradient(
+        hsl(190, 100%, 80%),
+        hsl(190, 100%, 80%) 10%,
+        hsla(190, 100%, 80%, 0) 60%
+      );
+      animation: fade 3s infinite, scale 3s infinite;
+    }
+
+    @keyframes fade {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    @keyframes scale {
+      0%, 100% {
+        transform: scale(0.4);
+      }
+      50% {
+        transform: scale(2);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="relative w-full h-full">
+    <div class="absolute inset-0 z-0" id="particles"></div>
+
+    <div class="glass max-w-2xl mx-auto mt-12 relative z-10 text-white">
+      <h1 class="text-center text-3xl font-bold glow-text mb-6">🔐 RSA Cipher Tool</h1>
+
+      <label class="block mb-2">Your Message:</label>
+      <textarea id="message" rows="3" class="w-full p-3 bg-black bg-opacity-30 rounded-md border border-cyan-400 text-white mb-4"></textarea>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <label class="block mb-1">Encrypted:</label>
+          <textarea id="encrypted" rows="3" readonly class="w-full p-2 rounded-md bg-gray-900 text-cyan-200 mb-2"></textarea>
+          <button class="copy-btn w-full py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded"
+            onclick="copyText('encrypted', this)">Copy Encrypted</button>
+        </div>
+
+        <div>
+          <label class="block mb-1">Decrypted:</label>
+          <textarea id="decrypted" rows="3" readonly class="w-full p-2 rounded-md bg-gray-900 text-lime-200 mb-2"></textarea>
+          <button class="copy-btn w-full py-1 bg-lime-600 hover:bg-lime-700 text-white rounded"
+            onclick="copyText('decrypted', this)">Copy Decrypted</button>
+        </div>
+      </div>
+
+      <div class="flex justify-center gap-6 mt-6">
+        <button onclick="encrypt()" class="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded shadow-lg">Encrypt 🔐</button>
+        <button onclick="decrypt()" class="px-6 py-2 bg-lime-500 hover:bg-lime-600 text-white rounded shadow-lg">Decrypt 🔓</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rsaKey = KEYUTIL.generateKeypair("RSA", 512);
+    const publicKey = rsaKey.pubKeyObj;
+    const privateKey = rsaKey.prvKeyObj;
+
+    function encrypt() {
+      const msg = document.getElementById("message").value;
+      const encryptedHex = KJUR.crypto.Cipher.encrypt(msg, publicKey);
+      document.getElementById("encrypted").value = encryptedHex;
+    }
+
+    function decrypt() {
+      const encryptedHex = document.getElementById("encrypted").value;
+      try {
+        const decrypted = KJUR.crypto.Cipher.decrypt(encryptedHex, privateKey);
+        document.getElementById("decrypted").value = decrypted;
+      } catch {
+        alert("Failed to decrypt.");
+      }
+    }
+
+    function copyText(id, btn) {
+      const text = document.getElementById(id);
+      navigator.clipboard.writeText(text.value).then(() => {
+        btn.innerText = "Copied!";
+        setTimeout(() => {
+          btn.innerText = id === 'encrypted' ? "Copy Encrypted" : "Copy Decrypted";
+        }, 1300);
+      });
+    }
+
+    // Particle Background
+    const container = document.getElementById('particles');
+    const particleNum = 70;
+
+    for (let i = 0; i < particleNum; i++) {
+      const circleContainer = document.createElement('div');
+      circleContainer.className = 'circle-container';
+
+      const circle = document.createElement('div');
+      circle.className = 'circle';
+
+      const size = Math.random() * 8 + 3;
+      const startX = Math.random() * 100;
+      const duration = 8000 + Math.random() * 3000;
+      const delay = Math.random() * 10000;
+      const startY = 100 + Math.random() * 10;
+      const endY = -startY - Math.random() * 30;
+
+      circleContainer.style.width = `${size}px`;
+      circleContainer.style.height = `${size}px`;
+      circleContainer.style.left = `${startX}vw`;
+      circleContainer.style.animation = `move-${i} ${duration}ms linear ${delay}ms infinite`;
+
+      circle.style.animationDelay = `${Math.random() * 4000}ms`;
+
+      const style = document.createElement('style');
+      style.innerHTML = `
+        @keyframes move-${i} {
+          from {
+            transform: translate3d(${startX}vw, ${startY}vh, 0);
+          }
+          to {
+            transform: translate3d(${Math.random() * 100}vw, ${endY}vh, 0);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+
+      circleContainer.appendChild(circle);
+      container.appendChild(circleContainer);
+    }
+  </script>
+</body>
+</html>
